@@ -40,3 +40,8 @@
 # Target
 
 האם לקוח יחזור לרכישות נוספות עתידיות?
+
+#מודלים ראשונים להרצה במקביל:
+1. Logistic_regression
+2. Random Forest
+3. XGBoost
