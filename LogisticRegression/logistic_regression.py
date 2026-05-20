@@ -216,6 +216,14 @@ columns_to_drop = [
     "Index",
     "index",
     "Unnamed: 0"
+
+    # Added in run 2
+    "Unit_Price",
+    "Original_Amount",
+    "Amount_Per_Item",
+    "Total_Amount",
+    "Discount_Amount", #No original data in the dataset
+    "Has_Discount" #No original data in the dataset
 ]
 
 columns_to_drop = [col for col in columns_to_drop if col in df.columns]
@@ -345,7 +353,7 @@ try:
 
     coef_df["Abs_Coefficient"] = coef_df["Coefficient"].abs()
 
-    print("\nTop 15 most influential features:")
+    print("\nTop most influential features:")
     print(
         coef_df
         .sort_values(by="Abs_Coefficient", ascending=False)
