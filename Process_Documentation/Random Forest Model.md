@@ -37,7 +37,7 @@
 
 <h1>ממצאי הרצה:</h1>
 
-<img src="Process Documentation/Images/RandomForest1.jpeg" width="900">
+<img src="Process_Documentation/Images/RandomForest1.jpeg" width="900">
 <ul>
 <li>דיוק (Accuracy) = המודל מצליח לחזות במדויק האם הלקוח הוא לקוח חוזר או לא ב-59.1% מהמקרים.</li>
 
