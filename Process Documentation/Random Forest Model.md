@@ -37,8 +37,7 @@
 
 <h1>ממצאי הרצה:</h1>
 
-<img width="1012" height="766" alt="WhatsApp Image 2026-05-20 at 01 24 30" src="https://github.com/user-attachments/assets/339abeb6-4d0c-4508-aebd-d03b9bda1f7c" />
-
+<img src="Process Documentation/Images/RandomForest1.jpeg" width="900">
 <ul>
 <li>דיוק (Accuracy) = המודל מצליח לחזות במדויק האם הלקוח הוא לקוח חוזר או לא ב-59.1% מהמקרים.</li>
 
