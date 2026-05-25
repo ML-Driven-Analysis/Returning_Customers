@@ -214,7 +214,17 @@ columns_to_drop = [
     "serial",
     "Index",
     "index",
-    "Unnamed: 0"
+    "Unnamed: 0",
+
+    #Run 2 - drop Price related features
+    "Unit_Price",
+    "Original_Amount",
+    "Amount_Per_Item",
+    "Total_Amount",
+    "Discount_Amount", 
+    "Has_Discount", 
+    "Discount_Rate"
+
 ]
 
 columns_to_drop = [col for col in columns_to_drop if col in df.columns]
@@ -273,6 +283,7 @@ model = Pipeline(steps=[
     ("classifier", RandomForestClassifier(
         n_estimators=100,      # Number of trees in the forest
         max_depth=10,          # Depth limit to prevent overfitting
+        class_weight="balanced", #Run 3 - returning: 0.835, new: 1.243
         random_state=42,       # Ensures reproducible results across runs
         n_jobs=-1              # Uses all available CPU cores for faster execution
     ))
@@ -303,19 +314,36 @@ model.fit(X_train, y_train)
 
 
 # =========================================================
-# 11. Predict
+# 11. Predict (Run 1-3)
 # =========================================================
 
-y_pred = model.predict(X_test)
+# y_pred = model.predict(X_test)
+# y_proba = model.predict_proba(X_test)[:, 1]
+
+# =========================================================
+# 11. Predict with Custom Threshold (58%) - Run 4
+# =========================================================
+
+# A. Get the predicted probabilities (confidence levels) for each customer belonging to Class 1 (Returning Customer)
 y_proba = model.predict_proba(X_test)[:, 1]
 
+# B. Set the new, stricter custom probability threshold (58% instead of the default 50%)
+custom_threshold = 0.58
+
+# C. Classify as 1 (Returning Customer) only if the predicted probability meets or exceeds the custom threshold
+y_pred = (y_proba >= custom_threshold).astype(int)
 
 # =========================================================
 # 12. Evaluation
 # =========================================================
 
+# Run 1-3
+# print("\n==============================")
+# print("Model Evaluation - Random Forest")
+# print("==============================")
+
 print("\n==============================")
-print("Model Evaluation - Random Forest")
+print(f"Model Evaluation - Random Forest (Threshold: {custom_threshold * 100}%)") # Run 4
 print("==============================")
 
 print("Accuracy:", accuracy_score(y_test, y_pred))
