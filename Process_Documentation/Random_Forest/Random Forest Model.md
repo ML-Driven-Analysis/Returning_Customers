@@ -47,11 +47,11 @@
 <h1>ממצאי הרצה:</h1>
 
 <p align="center">
-<img src="./Images/RandomForest1.jpeg" width="900">
+<img src="../Images/RandomForest1.jpeg" width="900">
 </p>
 
 <p align="center">
-<img src="./Images/RandomForest1_.jpeg" width="900">
+<img src="../Images/RandomForest1_.jpeg" width="900">
 </p>
 
 <ul>
@@ -93,7 +93,7 @@
 <h1>ממצאי הרצה שנייה:</h1>
 
 <p align="center">
-<img src="./Images/RandomForest2.jpeg" width="900">
+<img src="../Images/RandomForest2.jpeg" width="900">
 </p>
 
 <ul>
