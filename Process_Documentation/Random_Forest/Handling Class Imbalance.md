@@ -112,7 +112,7 @@ WeightNew = 5000 / (2 × 2010) ≈ 1.243
 # 4. ממצאי ההרצה
 
 <p align="center">
-<img src="./Images/RandomForest3.jpeg" width="900">
+<img src="Images/RandomForest3.jpeg" width="900">
 </p>
 
 ## א. מטריצת הבלבול החדשה (Confusion Matrix)
@@ -181,11 +181,11 @@ Accuracy הכללי ירד ל־54.1%, אך ירידה זו נחשבת חיובי
 # 5. פתרון מכיוון נוסף
 
 <p align="center">
-<img src="./Images/RandomForest4.jpeg" width="900">
+<img src="Images/RandomForest4.jpeg" width="900">
 </p>
 
 <p align="center">
-<img src="./Images/RandomForest4_.jpeg" width="900">
+<img src="Images/RandomForest4_.jpeg" width="900">
 </p>
 
 <ul dir="rtl" align="right">
