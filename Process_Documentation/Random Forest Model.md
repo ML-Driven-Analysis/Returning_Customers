@@ -50,6 +50,10 @@
 <img src="./Images/RandomForest1.jpeg" width="900">
 </p>
 
+<p align="center">
+<img src="./Images/RandomForest1_.jpeg" width="900">
+</p>
+
 <ul>
 <li>
 דיוק (Accuracy) = המודל מצליח לחזות במדויק האם הלקוח הוא לקוח חוזר או לא ב-59.1% מהמקרים.
