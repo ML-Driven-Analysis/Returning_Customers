@@ -164,8 +164,12 @@ Accuracy של 58.5% נראית סבירה, אך היא משקפת רק את הע
 
 | קובץ | תיאור |
 |---|---|
-| `logistic_regression.py` | קוד המודל המלא |
-| `logistic_regression_returning_customer_model.pkl` | המודל המאומן (joblib) |
+| `logistic_regression.py` | קוד המודל המלא (baseline) |
+| `logistic_regression_returning_customer_model.pkl` | מודל baseline (joblib) |
+| `logistic_experiment_1.py` | ניסוי 1: class_weight='balanced' |
+| `logistic_experiment_1_model.pkl` | מודל ניסוי 1 (joblib) |
+| `logistic_experiment_2.py` | ניסוי 2: balanced + הסרת פיצ'רים מקורלים |
+| `logistic_experiment_2_model.pkl` | מודל ניסוי 2 (joblib) |
 | `logistic1.png` | גרף/תמונה נלווית |
 
 ---
