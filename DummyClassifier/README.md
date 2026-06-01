@@ -73,7 +73,7 @@ DummyClassifier(strategy="most_frequent", random_state=42)
 | Accuracy | 59.8% | 58.5% | 49.0% |
 | Recall (קלאס 0) | 0% | 3% | 51% |
 | F1 Macro | 0.37 | 0.39 | 0.49 |
-| ROC AUC | 0.5 | 0.475 ⚠️ | 0.475 ⚠️ |
+| ROC AUC | 0.5 | 0.475 ⚠️ | 0.475 |
 
 **מסקנה מרכזית:** הרגרסיה הלוגיסטית ה-baseline (ללא איזון) כמעט זהה ל-DummyClassifier — F1 Macro 0.39 לעומת 0.37, ו-ROC AUC **נמוך יותר** מ-0.5. המשמעות: הרגרסיה הלוגיסטית ללא `class_weight` **גרועה מהמודל הטיפש**. רק לאחר הוספת `class_weight='balanced'` (Exp1) המודל עוקף את ה-Dummy בצורה ברורה.
 
