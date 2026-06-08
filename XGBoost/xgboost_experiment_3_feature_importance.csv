@@ -1,0 +1,54 @@
+Feature,Importance
+cat__City_Eskisehir,0.040969472
+cat__City_Antalya,0.036202606
+cat__Product_Category_Sports,0.032788597
+cat__Gender_Female,0.031296853
+cat__City_Gaziantep,0.02758625
+cat__Product_Category_Books,0.026297268
+num__Quantity,0.026046442
+cat__Device_Type_Mobile,0.02589758
+cat__City_Bursa,0.025237503
+num__Amount_Per_Item,0.025168495
+cat__Payment_Method_Digital Wallet,0.024726246
+cat__Device_Type_Desktop,0.024139997
+num__Customer_Rating,0.023904938
+cat__City_Adana,0.02330529
+cat__City_Ankara,0.022944013
+cat__City_Kayseri,0.02256539
+num__Month,0.02253239
+num__Discount_Amount,0.02226225
+cat__Product_Category_Home & Garden,0.022210635
+num__DayOfMonth,0.02202175
+num__Unit_Price,0.021888044
+cat__Product_Category_Toys,0.021665275
+cat__Product_Category_Food,0.02154928
+num__Original_Amount,0.021452902
+num__Total_Amount,0.021327393
+num__Pages_Per_Minute,0.021196555
+num__Session_Duration_Minutes,0.020695303
+num__Pages_Viewed,0.020661999
+num__DayOfWeek,0.02065371
+num__Discount_Rate,0.020549478
+num__Age,0.020544391
+num__Delivery_Time_Days,0.02038555
+num__Has_Discount,0.0199627
+cat__Device_Type_Tablet,0.019904966
+cat__Payment_Method_Bank Transfer,0.019657742
+cat__City_Izmir,0.01820103
+num__High_Rating,0.017819805
+cat__Product_Category_Beauty,0.017772812
+cat__City_Istanbul,0.01723239
+cat__Payment_Method_Credit Card,0.01722973
+num__Quarter,0.016894884
+cat__Payment_Method_Debit Card,0.015846916
+num__Many_Pages_Viewed,0.014448488
+cat__City_Konya,0.010592742
+cat__Product_Category_Fashion,0.0075997086
+cat__Product_Category_Electronics,0.0061621433
+num__Long_Session,0.0
+num__Year,0.0
+num__IsWeekend,0.0
+cat__Gender_Other,0.0
+num__Fast_Delivery,0.0
+cat__Gender_Male,0.0
+cat__Payment_Method_Cash on Delivery,0.0
