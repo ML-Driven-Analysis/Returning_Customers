@@ -1,0 +1,2 @@
+,best_C,optimal_threshold,accuracy_default,recall_1_default,precision_1_default,f1_1_default,f1_macro_default,roc_auc,accuracy_tuned,recall_1_tuned,precision_1_tuned,f1_1_tuned,f1_macro_tuned
+logistic_experiment_2,10,0.7323,0.806394,0.817511,0.458038,0.587121,0.730336,0.890014,0.879041,0.648734,0.638629,0.643642,0.7854

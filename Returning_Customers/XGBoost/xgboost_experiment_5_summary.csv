@@ -1,0 +1,2 @@
+,accuracy_mean,accuracy_std,balanced_accuracy_mean,balanced_accuracy_std,precision_0_mean,precision_0_std,recall_0_mean,recall_0_std,f1_0_mean,f1_0_std,precision_1_mean,precision_1_std,recall_1_mean,recall_1_std,f1_1_mean,f1_1_std,f1_macro_mean,f1_macro_std,roc_auc_mean,roc_auc_std,oof_accuracy,oof_recall_0,oof_f1_macro,oof_roc_auc
+xgboost_experiment_5,0.512,0.018177,0.502125,0.019825,0.403971,0.021665,0.451741,0.036512,0.426286,0.026988,0.600075,0.017058,0.552508,0.022149,0.575092,0.016806,0.500689,0.019217,0.501852,0.024084,0.512,0.451741,0.50095,0.501529

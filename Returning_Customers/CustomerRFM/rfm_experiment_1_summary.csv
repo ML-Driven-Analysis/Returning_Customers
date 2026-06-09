@@ -1,0 +1,2 @@
+,accuracy_mean,accuracy_std,balanced_accuracy_mean,balanced_accuracy_std,precision_0_mean,precision_0_std,recall_0_mean,recall_0_std,f1_0_mean,f1_0_std,precision_1_mean,precision_1_std,recall_1_mean,recall_1_std,f1_1_mean,f1_1_std,f1_macro_mean,f1_macro_std,roc_auc_mean,roc_auc_std,oof_accuracy,oof_recall_0,oof_f1_macro,oof_roc_auc
+rfm_experiment_1,0.5132,0.015816,0.500193,0.016112,0.402101,0.017,0.433831,0.033024,0.417017,0.022599,0.598212,0.014253,0.566555,0.027158,0.581671,0.01816,0.499344,0.015849,0.502262,0.022007,0.5132,0.433831,0.499678,0.502845
