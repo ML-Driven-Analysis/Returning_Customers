@@ -1,0 +1,2 @@
+,scale_pos_weight,optimal_threshold,accuracy_default,balanced_accuracy_default,precision_1_default,recall_1_default,f1_1_default,f1_macro_default,roc_auc,pr_auc,accuracy_tuned,balanced_accuracy_tuned,precision_1_tuned,recall_1_tuned,f1_1_tuned,f1_macro_tuned
+xgboost_experiment_2,4.94,0.6607,0.895027,0.883045,0.639127,0.864979,0.735096,0.83482,0.952041,0.825765,0.923091,0.866267,0.766839,0.780591,0.773654,0.863664

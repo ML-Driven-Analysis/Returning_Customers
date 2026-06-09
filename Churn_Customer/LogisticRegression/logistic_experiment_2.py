@@ -25,6 +25,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
+    balanced_accuracy_score,
     precision_score,
     recall_score,
     f1_score,
@@ -221,7 +222,7 @@ y_proba_oof = cross_val_predict(model, X, y, cv=outer_cv, method="predict_proba"
 
 print("\nOut-of-fold metrics (default threshold = 0.5):")
 print(f"  Accuracy:          {accuracy_score(y, y_pred_oof):.4f}")
-print(f"  Balanced Accuracy: {accuracy_score(y, y_pred_oof):.4f}")
+print(f"  Balanced Accuracy: {balanced_accuracy_score(y, y_pred_oof):.4f}")
 print(f"  Precision (Ch=1):  {precision_score(y, y_pred_oof, pos_label=1, zero_division=0):.4f}")
 print(f"  Recall    (Ch=1):  {recall_score(y, y_pred_oof, pos_label=1, zero_division=0):.4f}")
 print(f"  F1        (Ch=1):  {f1_score(y, y_pred_oof, pos_label=1, zero_division=0):.4f}")
@@ -258,7 +259,7 @@ y_pred_tuned = (y_proba_oof >= best_threshold).astype(int)
 
 print("\nOut-of-fold metrics (optimal threshold):")
 print(f"  Accuracy:          {accuracy_score(y, y_pred_tuned):.4f}")
-print(f"  Balanced Accuracy: {accuracy_score(y, y_pred_tuned):.4f}")
+print(f"  Balanced Accuracy: {balanced_accuracy_score(y, y_pred_tuned):.4f}")
 print(f"  Precision (Ch=1):  {precision_score(y, y_pred_tuned, pos_label=1, zero_division=0):.4f}")
 print(f"  Recall    (Ch=1):  {recall_score(y, y_pred_tuned, pos_label=1, zero_division=0):.4f}")
 print(f"  F1        (Ch=1):  {f1_score(y, y_pred_tuned, pos_label=1, zero_division=0):.4f}")

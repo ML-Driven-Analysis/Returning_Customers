@@ -1,0 +1,2 @@
+,scale_pos_weight,accuracy,balanced_accuracy,precision_1,recall_1,f1_1,f1_macro,roc_auc,pr_auc
+xgboost_experiment_1,4.94,0.893606,0.88177,0.635376,0.863924,0.732231,0.832922,0.951979,0.825495

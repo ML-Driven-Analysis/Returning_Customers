@@ -22,6 +22,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
+    balanced_accuracy_score,
     precision_score,
     recall_score,
     f1_score,
@@ -204,7 +205,7 @@ y_proba_oof = cross_val_predict(model, X, y, cv=cv, method="predict_proba", n_jo
 
 print("\nAggregated out-of-fold metrics:")
 print(f"  Accuracy:          {accuracy_score(y, y_pred_oof):.4f}")
-print(f"  Balanced Accuracy: {accuracy_score(y, y_pred_oof):.4f}")
+print(f"  Balanced Accuracy: {balanced_accuracy_score(y, y_pred_oof):.4f}")
 print(f"  Precision class 0: {precision_score(y, y_pred_oof, pos_label=0, zero_division=0):.4f}")
 print(f"  Recall class 0:    {recall_score(y, y_pred_oof, pos_label=0, zero_division=0):.4f}")
 print(f"  F1 class 0:        {f1_score(y, y_pred_oof, pos_label=0, zero_division=0):.4f}")
