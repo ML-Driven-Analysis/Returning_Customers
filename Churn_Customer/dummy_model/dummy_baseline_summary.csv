@@ -1,0 +1,4 @@
+strategy,accuracy,balanced_accuracy,precision_1,recall_1,f1_1,f1_macro,roc_auc,pr_auc
+most_frequent,0.8316,0.5,0.0,0.0,0.0,0.454,0.5,0.1684
+stratified,0.7174,0.5033,0.1736,0.1804,0.1769,0.5032,0.5033,0.1693
+uniform,0.5078,0.5118,0.175,0.5179,0.2617,0.4463,0.5,0.1684
