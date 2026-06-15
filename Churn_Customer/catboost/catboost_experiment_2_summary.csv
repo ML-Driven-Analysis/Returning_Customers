@@ -1,0 +1,4 @@
+experiment,threshold,oof_accuracy,oof_bal_accuracy,oof_precision_1,oof_recall_1,oof_f1_1,oof_f1_macro,oof_roc_auc,oof_pr_auc
+catboost_experiment_2_t30,0.3,0.922735,0.935879,0.69746,0.955696,0.806409,0.879072,0.985948,0.942168
+catboost_experiment_2_t40,0.4,0.943339,0.941116,0.773716,0.937764,0.847878,0.906532,0.985948,0.942168
+catboost_experiment_2_t50,0.5,0.954529,0.93859,0.832054,0.914557,0.871357,0.92187,0.985948,0.942168
