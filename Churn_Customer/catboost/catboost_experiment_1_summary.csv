@@ -1,2 +1,2 @@
 ,oof_accuracy,oof_balanced_accuracy,oof_precision_1,oof_recall_1,oof_f1_1,oof_f1_macro,oof_roc_auc,oof_pr_auc
-catboost_experiment_1,0.959739,0.905245,0.91358,0.825279,0.867188,0.921731,0.984627,0.943209
+catboost_experiment_1,0.943754,0.867864,0.895397,0.753521,0.818356,0.89254,0.979577,0.927008

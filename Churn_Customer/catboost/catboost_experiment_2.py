@@ -30,9 +30,9 @@ from sklearn.metrics import (
 from catboost import CatBoostClassifier
 
 
-
+# ---------------------------------------------------------------------------
 # evaluation_utils  (inline)
-
+# ---------------------------------------------------------------------------
 
 def evaluate_holdout(model, X_test, y_test, thresholds=None, pos_label=1):
     if thresholds is None:
@@ -80,9 +80,9 @@ def print_evaluation(results, label=""):
         print(f"  Actual 1  :  {cm[1][0]:>6}   {cm[1][1]:>6}")
 
 
-
+# ---------------------------------------------------------------------------
 # sklearn-cloneable CatBoost wrapper
-
+# ---------------------------------------------------------------------------
 
 class CloneableCatBoost(CatBoostClassifier):
     def __init__(self, cat_features_list=None, **kwargs):
@@ -96,8 +96,9 @@ class CloneableCatBoost(CatBoostClassifier):
         return params
 
 
-#  Paths
-
+# ===========================================================================
+# 1. Paths
+# ===========================================================================
 
 BASE_DIR  = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR.parent / "dataset" / "E Commerce Dataset.xlsx"
@@ -117,9 +118,9 @@ if not DATA_FILE.exists():
     raise FileNotFoundError(f"Dataset not found: {DATA_FILE}")
 
 
-
-#  Load & validate
-
+# ===========================================================================
+# 2. Load & validate
+# ===========================================================================
 
 df = pd.read_excel(DATA_FILE, sheet_name="E Comm")
 df.columns = df.columns.str.strip()
@@ -139,9 +140,9 @@ print(f"  Churn = 1 (churned):  {n1:,} ({n1/len(df)*100:.1f}%)")
 print(f"  Imbalance ratio: {n0/n1:.2f}:1")
 
 
-
-#  Split — 70/30, shuffle=False
-
+# ===========================================================================
+# 3. Split — 70/30, shuffle=False
+# ===========================================================================
 
 NUMERIC_FEATURES = [
     "Tenure", "WarehouseToHome", "HourSpendOnApp", "NumberOfDeviceRegistered",
@@ -162,10 +163,11 @@ y = df[LABEL]
 X_train, X_test, y_train, y_test = train_test_split(
     X, y,
     test_size=0.30,
-    shuffle=False,
+    stratify=y,
+    random_state=42,
 )
 
-print(f"\nSplit (shuffle=False):")
+print(f"\nSplit (stratify=y, random_state=42):")
 print(f"  Train: {len(X_train):,} rows ({len(X_train)/len(X)*100:.1f}%)")
 print(f"  Test : {len(X_test):,}  rows ({len(X_test)/len(X)*100:.1f}%)")
 print(f"\n  Train — Churn=1: {y_train.sum():,} ({y_train.mean()*100:.1f}%)")
@@ -175,8 +177,9 @@ print(f"Categorical features ({len(CATEGORICAL_FEATURES)}): {CATEGORICAL_FEATURE
 print(f"\nThreshold sweep: [0.30, 0.40, 0.50]")
 
 
-
-#  Pipeline
+# ===========================================================================
+# 4. Pipeline
+# ===========================================================================
 
 numeric_transformer = Pipeline(steps=[
     ("imputer", SimpleImputer(strategy="median")),
@@ -223,9 +226,9 @@ print(f"  depth              = 6")
 print(f"  auto_class_weights = Balanced  ← NEW")
 
 
-
-#  Train
-
+# ===========================================================================
+# 5. Train
+# ===========================================================================
 
 print("\n" + "=" * 70)
 print("Training on 70% train set...")
@@ -236,8 +239,9 @@ model.fit(X_train, y_train)
 print("Training complete.")
 
 
-#  Evaluate — test set (חשיפה יחידה)
-
+# ===========================================================================
+# 6. Evaluate — test set (חשיפה יחידה)
+# ===========================================================================
 
 print("\n" + "=" * 70)
 print("Evaluating on 30% test set (single exposure)...")
@@ -249,9 +253,9 @@ results = evaluate_holdout(model, X_test, y_test, thresholds=THRESHOLDS)
 print_evaluation(results, label="CatBoost Experiment 2 — Test Set")
 
 
-
-#  Comparison vs Experiment 1
-
+# ===========================================================================
+# 7. Comparison vs Experiment 1
+# ===========================================================================
 
 EXP1 = {
     "recall_1":    0.8253,
@@ -278,8 +282,9 @@ for m in ["recall_1", "precision_1", "f1_1", "f1_macro", "roc_auc"]:
     print(row)
 
 
-
-#  Save summary
+# ===========================================================================
+# 8. Save summary
+# ===========================================================================
 
 rows = []
 for t in THRESHOLDS:
