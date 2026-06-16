@@ -22,6 +22,61 @@ from sklearn.metrics import (
 )
 
 
+def _metrics_at_threshold(y, y_proba, threshold, roc_auc, pr_auc, pos_label=1):
+    y_pred = (y_proba >= threshold).astype(int)
+    return {
+        "accuracy": accuracy_score(y, y_pred),
+        "balanced_accuracy": balanced_accuracy_score(y, y_pred),
+        "precision_1": precision_score(y, y_pred, pos_label=pos_label, zero_division=0),
+        "recall_1": recall_score(y, y_pred, pos_label=pos_label, zero_division=0),
+        "f1_1": f1_score(y, y_pred, pos_label=pos_label, zero_division=0),
+        "f1_macro": f1_score(y, y_pred, average="macro", zero_division=0),
+        "roc_auc": roc_auc,
+        "pr_auc": pr_auc,
+        "confusion_matrix": confusion_matrix(y, y_pred),
+    }
+
+
+def evaluate_predictions(
+    y: pd.Series,
+    y_proba: np.ndarray,
+    thresholds: list = None,
+    pos_label: int = 1,
+) -> dict:
+    """
+    Evaluate already-computed probabilities against true labels.
+    Use this for a single train/test (holdout) check — no cross-validation.
+
+    Parameters
+    ----------
+    y          : true binary labels
+    y_proba    : positive-class predicted probabilities
+    thresholds : list of classification thresholds to evaluate. Defaults to [0.5].
+    pos_label  : positive class label (default 1)
+
+    Returns
+    -------
+    dict with keys:
+        "thresholds" -> {threshold -> metrics_dict}
+        "y_proba"    -> the probabilities passed in
+    """
+    if thresholds is None:
+        thresholds = [0.5]
+
+    roc_auc = roc_auc_score(y, y_proba)
+    pr_auc = average_precision_score(y, y_proba, pos_label=pos_label)
+
+    threshold_results = {
+        t: _metrics_at_threshold(y, y_proba, t, roc_auc, pr_auc, pos_label=pos_label)
+        for t in thresholds
+    }
+
+    return {
+        "thresholds": threshold_results,
+        "y_proba": y_proba,
+    }
+
+
 def evaluate_model_cv(
     model,
     X: pd.DataFrame,
@@ -59,20 +114,10 @@ def evaluate_model_cv(
     roc_auc = roc_auc_score(y, y_proba)
     pr_auc = average_precision_score(y, y_proba, pos_label=pos_label)
 
-    threshold_results = {}
-    for t in thresholds:
-        y_pred = (y_proba >= t).astype(int)
-        threshold_results[t] = {
-            "accuracy": accuracy_score(y, y_pred),
-            "balanced_accuracy": balanced_accuracy_score(y, y_pred),
-            "precision_1": precision_score(y, y_pred, pos_label=pos_label, zero_division=0),
-            "recall_1": recall_score(y, y_pred, pos_label=pos_label, zero_division=0),
-            "f1_1": f1_score(y, y_pred, pos_label=pos_label, zero_division=0),
-            "f1_macro": f1_score(y, y_pred, average="macro", zero_division=0),
-            "roc_auc": roc_auc,
-            "pr_auc": pr_auc,
-            "confusion_matrix": confusion_matrix(y, y_pred),
-        }
+    threshold_results = {
+        t: _metrics_at_threshold(y, y_proba, t, roc_auc, pr_auc, pos_label=pos_label)
+        for t in thresholds
+    }
 
     return {
         "thresholds": threshold_results,
@@ -90,7 +135,7 @@ def print_evaluation(results: dict, label: str = "") -> None:
     results : dict returned by evaluate_model_cv
     label   : optional header label (e.g. experiment name or threshold description)
     """
-    header = f"Evaluation Results" + (f" — {label}" if label else "")
+    header = f"Evaluation Results" + (f" - {label}" if label else "")
     print("\n" + "=" * 70)
     print(header)
     print("=" * 70)

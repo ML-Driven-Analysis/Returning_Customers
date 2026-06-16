@@ -1,4 +1,12 @@
-# XGBoost — ניבוי נטישת לקוחות
+# XGBoost — ניבוי נטישת לקוחות (E-Commerce Customer Churn)
+
+## מטרה
+
+לבדוק האם XGBoost משפר את ביצועי הניבוי לעומת Logistic Regression, עם מתודולוגיה נכונה: **חלוקת Train/Test** (70%/30%, stratified) — קבוצת ה-Test נשמרת בצד ונבדקת **פעם אחת בלבד**, בסוף הניסוי. כל שלבי האימון, ה-Cross-Validation וה-threshold tuning מתבצעים רק על קבוצת ה-Train; ה-Test משמש בלעדית למדידת ביצועים סופית בלתי-מוטה.
+
+XGBoost נבחר כי הוא חזק מאוד על נתונים טבלאיים, נפוץ בפרויקטי ML, ותומך טבעית בחוסר איזון דרך הפרמטר `scale_pos_weight`.
+
+---
 
 ## נתונים
 
@@ -7,163 +15,184 @@
 | קובץ | `E Commerce Dataset.xlsx` (גיליון: E Comm) |
 | שורות | 5,630 |
 | Target | `Churn` (1 = נטש, 0 = נשאר) |
-| חוסר איזון | 83.2% / 16.8% |
-| scale_pos_weight | 4.94 (4682 / 948) |
+| חוסר איזון | 83.2% / 16.8% — יחס 4.94:1 |
+| Train | 3,941 שורות (664 נטשו, 16.8%) — 70% מהדאטה |
+| Test (holdout) | 1,689 שורות (284 נטשו, 16.8%) — 30% מהדאטה, נבדק פעם אחת בסוף |
+| scale_pos_weight | 4.94 — מחושב **מ-TRAIN בלבד** (לא מכל הדאטהסט, כדי לא לדלוף מידע מה-test) |
+
+חלוקת ה-Train/Test בוצעה עם `stratify=y` כדי לשמר את אחוז הנטישה (16.8%) בשתי הקבוצות, ו-`random_state=42` לשחזוריות.
 
 ---
 
 ## ניסוי 1 — Baseline XGBoost + scale_pos_weight
 
+**קובץ:** `xgboost_experiment_1_holdout.py`
+
 ### גישה
 
-XGBoost בלי feature engineering ובלי threshold tuning — נקודת ייחוס נקייה מול Logistic Regression.  
-חוסר האיזון מטופל דרך `scale_pos_weight=4.94` (פרמטר פנימי של XGBoost).
+XGBoost בלי feature engineering ובלי threshold tuning — נקודת ייחוס נקייה. חוסר האיזון מטופל דרך `scale_pos_weight` (פרמטר פנימי של XGBoost שמשקלל יותר את מחלקת המיעוט):
 
 ```python
-XGBClassifier(
-    n_estimators=300,
-    max_depth=3,
-    learning_rate=0.05,
-    subsample=0.8,
-    colsample_bytree=0.8,
-    scale_pos_weight=4.94,
-    eval_metric="logloss",
-    random_state=42,
-)
+Train/Test split: 70% / 30%, stratified, random_state=42
+
+ColumnTransformer:
+  numeric (13)    → SimpleImputer(median) + StandardScaler
+  categorical (5) → SimpleImputer(most_frequent) + OneHotEncoder(handle_unknown="ignore")
+→ XGBClassifier(
+      n_estimators=300,
+      max_depth=3,
+      learning_rate=0.05,
+      subsample=0.8,
+      colsample_bytree=0.8,
+      scale_pos_weight=4.94,
+      eval_metric="logloss",
+      random_state=42,
+  )
+
+5-Fold StratifiedKFold (shuffle=True, random_state=42) על ה-TRAIN — לאימון ולבחירת המודל
+בדיקה סופית על ה-TEST, פעם אחת, אחרי אימון על כל ה-TRAIN
 ```
 
-**ולידציה:** StratifiedKFold, 5 folds, shuffle=True, random_state=42
+### פיצ'רים
 
-### מאפיינים
+**Numeric (13):** Tenure, WarehouseToHome, HourSpendOnApp, NumberOfDeviceRegistered, SatisfactionScore, NumberOfAddress, Complain, OrderAmountHikeFromlastYear, CouponUsed, OrderCount, DaySinceLastOrder, CashbackAmount, CityTier
 
-**נומריים (13):** Tenure, WarehouseToHome, HourSpendOnApp, NumberOfDeviceRegistered,
-SatisfactionScore, NumberOfAddress, Complain, OrderAmountHikeFromlastYear,
-CouponUsed, OrderCount, DaySinceLastOrder, CashbackAmount, CityTier
+**Categorical (5):** PreferredLoginDevice, PreferredPaymentMode, Gender, PreferedOrderCat, MaritalStatus
 
-**קטגוריים (5):** PreferredLoginDevice, PreferredPaymentMode, Gender,
-PreferedOrderCat, MaritalStatus
+### תוצאות (על קבוצת ה-Test, חד-פעמי)
 
-### תוצאות (threshold=0.5)
+| מדד | ערך |
+|---|---|
+| Accuracy | 89.82% |
+| Balanced Accuracy | **89.38%** |
+| Precision (Churn=1) | 64.29% |
+| Recall (Churn=1) | **88.73%** |
+| F1 (Churn=1) | 74.56% |
+| F1 Macro | 84.10% |
+| ROC AUC | **94.81%** |
+| PR AUC | 81.61% |
 
-| מדד | XGBoost Exp 1 | Logistic Exp 1 |
+### מטריצת בלבול (Test)
+
+|  | חזוי: נשאר | חזוי: נטש |
 |---|---|---|
-| Accuracy | **89.4%** | 89.4% |
-| Balanced Accuracy | **88.2%** | 74.8% |
-| Precision (Churn=1) | **63.5%** | 58.8% |
-| Recall (Churn=1) | **86.4%** | 56.3% |
-| F1 (Churn=1) | **73.2%** | 57.5% |
-| F1 Macro | **83.3%** | 72.6% |
-| ROC AUC | **95.2%** | 84.0% |
-| PR AUC | **82.6%** | — |
-
-### מטריצת בלבול (threshold=0.5)
-
-|  | ניבוי: נשאר | ניבוי: נטש |
-|---|---|---|
-| **בפועל: נשאר** | 4,212 | 470 |
-| **בפועל: נטש** | 129 | 819 |
-
-### Threshold Sweep
-
-| Threshold | Precision(1) | Recall(1) | F1(1) | F1 Macro |
-|---|---|---|---|---|
-| 0.50 | 63.5% | 86.4% | 73.2% | 83.3% |
-| 0.55 | 67.2% | 83.0% | 74.3% | 84.1% |
-| 0.60 | 71.7% | 80.6% | 75.9% | 85.3% |
-| 0.65 | **75.1%** | 78.6% | **76.8%** | **86.0%** |
-| 0.70 | 77.1% | 73.6% | 75.3% | 85.2% |
-
-סף 0.65 נותן את ה-F1 Macro הגבוה ביותר.
+| **אמיתי: נשאר** | 1,265 | 140 |
+| **אמיתי: נטש** | 32 | 252 |
 
 ### מסקנות
 
-**הצלחות:**
-- ROC AUC של 95.2% — שיפור משמעותי על Logistic Regression (84.0%)
-- Recall 86.4% — המודל מזהה 86% מהלקוחות שנוטשים
-- Balanced Accuracy 88.2% — הרבה יותר טוב מ-74.8% ב-Logistic Regression
+**✅ ROC AUC גבוה משמעותית מ-Logistic Regression** (94.8% לעומת ~88.5%) — כבר במודל הבסיסי, בלי שום feature engineering.
 
-**חולשות:**
-- Precision רק 63.5% — על כל לקוח שנוטש נכון, יש 36.5% false positives
-- 470 retained customers מסווגים שגוי כנוטשים
+**Recall גבוה מאוד (88.7%):** המודל מזהה כ-9 מתוך 10 לקוחות שינטשו בקבוצת ה-test.
 
-**השוואה ל-Logistic Regression:**
-XGBoost עולה בכל המדדים ה-חשובים, בלי שום feature engineering.
+**⚠️ חולשה — Precision מתון (64.3%):** על כל לקוח שנוטש נכון, יש כ-36% false positives.
 
 ---
 
 ## ניסוי 2 — Feature Engineering + Threshold Tuning
 
+**קובץ:** `xgboost_experiment_2_holdout.py`
+
 ### גישה
 
-שני שיפורים על ניסוי 1:
-1. **Feature engineering** — 4 מאפיינים נגזרים (זהים ל-Logistic Regression Exp 2)
-2. **Threshold tuning** — חיפוש הסף האופטימלי לפי F1 Macro דרך Precision-Recall curve
+שני שיפורים על ניסוי 1, מבוססים רק על קבוצת ה-Train:
 
 ```python
-# מאפיינים חדשים
-AvgCashbackPerOrder  = CashbackAmount / OrderCount
-IsHighComplainer     = (Complain == 1).astype(int)
-LowSatisfaction      = (SatisfactionScore <= 2).astype(int)
-DaysSinceOrderBucket = "recent" / "medium" / "long" / "unknown"
+Train/Test split: 70% / 30%, stratified, random_state=42
+Feature Engineering: +4 פיצ'רים חדשים (16 numeric, 6 categorical)
+Threshold tuning (TRAIN, Precision-Recall curve): optimal = 0.7178
+בדיקה סופית — TEST, בשני הספים (0.5 ו-0.7178), פעם אחת
 ```
 
-**מאפיינים סה"כ:** 16 נומריים, 6 קטגוריים (במקום 13+5 בניסוי 1)
+### פיצ'רים חדשים
 
-### תוצאות (threshold=0.5)
-
-| מדד | XGBoost Exp 2 | XGBoost Exp 1 |
+| פיצ'ר | חישוב | משמעות |
 |---|---|---|
-| Accuracy | 89.5% | 89.4% |
-| Balanced Accuracy | 88.3% | 88.2% |
-| Precision (Churn=1) | 63.9% | 63.5% |
-| Recall (Churn=1) | 86.5% | 86.4% |
-| F1 (Churn=1) | 73.5% | 73.2% |
-| F1 Macro | 83.5% | 83.3% |
-| ROC AUC | **95.2%** | 95.2% |
-| PR AUC | **82.6%** | 82.6% |
+| `AvgCashbackPerOrder` | `CashbackAmount / OrderCount` | קאשבק ממוצע לפי הזמנה |
+| `IsHighComplainer` | `Complain == 1` | הגיש תלונה |
+| `LowSatisfaction` | `SatisfactionScore <= 2` | שביעות רצון נמוכה מאוד |
+| `DaysSinceOrderBucket` | recent (≤7 ימים) / medium (≤30) / long | גיל ההזמנה האחרונה |
 
-### תוצאות (threshold=0.66 — אופטימלי לפי F1 Macro)
+### תוצאות — Threshold = 0.5 (על קבוצת ה-Test, חד-פעמי)
 
-| מדד | threshold=0.5 | threshold=0.66 |
+| מדד | ערך |
+|---|---|
+| Accuracy | 89.46% |
+| Balanced Accuracy | 88.89% |
+| Precision (Churn=1) | 63.45% |
+| Recall (Churn=1) | 88.03% |
+| F1 (Churn=1) | 73.75% |
+| F1 Macro | 83.58% |
+| ROC AUC | 94.86% |
+| PR AUC | 81.63% |
+
+### תוצאות — Threshold = 0.7178 (אופטימלי, נמצא על TRAIN; נבדק על Test)
+
+| מדד | ערך |
+|---|---|
+| Accuracy | 91.65% |
+| Balanced Accuracy | 84.17% |
+| Precision (Churn=1) | **76.38%** |
+| Recall (Churn=1) | 72.89% |
+| F1 (Churn=1) | 74.59% |
+| **F1 Macro** | **84.80%** |
+| ROC AUC | 94.86% |
+| PR AUC | 81.63% |
+
+### מטריצות בלבול (Test)
+
+**Threshold = 0.5:**
+
+|  | חזוי: נשאר | חזוי: נטש |
 |---|---|---|
-| Accuracy | 89.5% | **92.3%** |
-| Balanced Accuracy | 88.3% | 86.6% |
-| Precision (Churn=1) | 63.9% | **76.7%** |
-| Recall (Churn=1) | 86.5% | 78.1% |
-| F1 (Churn=1) | 73.5% | **77.4%** |
-| F1 Macro | 83.5% | **86.4%** |
-| ROC AUC | 95.2% | 95.2% |
+| **אמיתי: נשאר** | 1,261 | 144 |
+| **אמיתי: נטש** | 34 | 250 |
 
-### מטריצת בלבול (threshold=0.66)
+**Threshold = 0.7178:**
 
-|  | ניבוי: נשאר | ניבוי: נטש |
+|  | חזוי: נשאר | חזוי: נטש |
 |---|---|---|
-| **בפועל: נשאר** | 4,457 | 225 |
-| **בפועל: נטש** | 208 | 740 |
+| **אמיתי: נשאר** | 1,341 | 64 |
+| **אמיתי: נטש** | 77 | 207 |
 
 ### מסקנות
 
-**הצלחות:**
-- Threshold tuning שיפר F1 Macro מ-83.5% ל-86.4%
-- Precision קפצה מ-63.9% ל-76.7% — false positives ירדו מ-463 ל-225
-- Accuracy עלתה ל-92.3%
+**F1 Macro של 84.80% — שיא הדיוק מבין כל הניסויים בפרויקט** (Logistic + XGBoost).
 
-**Feature Engineering:**
-- שיפור שולי ביחס לניסוי 1 (ROC AUC זהה) — XGBoost לומד בעצמו מרבית האינטראקציות
-- הערך האמיתי של threshold tuning הוא גדול יותר מ-feature engineering בהקשר זה
+**Feature engineering לא שינה את ROC AUC:** XGBoost כבר לומד בעצמו את האינטראקציות הרלוונטיות בין הפיצ'רים, ולכן feature engineering ידני מוסיף ערך מוגבל.
 
-**מה לא השתנה:** ROC AUC נשאר 95.2% — הסיווג הגולמי זהה; רק נקודת ההפרדה שונתה
+**Threshold tuning הוא התרומה האמיתית:** Precision עלה מ-63.5% ל-76.4% (פחות false positives, מ-144 ל-64), במחיר ירידה ב-Recall (88% → 73%).
 
 ---
 
-## השוואה כללית בין המודלים
+## השוואה סופית (כל המדדים על Test בלבד)
 
 | מודל | ROC AUC | F1 Macro | Recall(1) | Precision(1) |
 |---|---|---|---|---|
-| Logistic Reg. Exp 1 (baseline) | 84.0% | 72.6% | 56.3% | 58.8% |
-| Logistic Reg. Exp 2 (thresh=0.5) | ~84% | ~74% | ~80% | ~55% |
-| XGBoost Exp 1 (thresh=0.5) | 95.2% | 83.3% | 86.4% | 63.5% |
-| **XGBoost Exp 2 (thresh=0.66)** | **95.2%** | **86.4%** | 78.1% | **76.7%** |
+| Logistic Regression Exp 1 (baseline) | 88.4% | 77.4% | 50.7% | 77.0% |
+| Logistic Regression Exp 2 (threshold=0.7365) | 88.5% | 77.3% | 62.7% | 62.0% |
+| XGBoost Exp 1 (baseline, threshold=0.5) | 94.8% | 84.1% | **88.7%** | 64.3% |
+| **XGBoost Exp 2 (threshold=0.7178)** | **94.9%** | **84.8%** | 72.9% | **76.4%** |
+
+XGBoost עולה משמעותית על Logistic Regression בכל המדדים, על קבוצת test בלתי-מוטה.
+
+### הבחירה תלויה בהחלטה עסקית
+
+| מצב | Threshold מומלץ |
+|---|---|
+| קמפיין שימור — כל פנייה עולה כסף (Precision גבוה) | 0.7178 |
+| פנייה זולה — עדיף לתפוס כמה שיותר נוטשים (Recall גבוה) | 0.5 |
+
+---
+
+## מבנה הקוד והערכה משותפת
+
+שני הניסויים משתמשים בקובץ משותף `../evaluation_utils.py` שמכיל:
+- `evaluate_model_cv(model, X, y, cv, thresholds)` — מריץ Cross-Validation על ה-Train ומחזיר מדדים אחידים (Accuracy, Balanced Accuracy, Precision/Recall/F1 למחלקת הנוטשים, F1 Macro, ROC AUC, PR AUC, Confusion Matrix) לכל סף שמתבקש.
+- `evaluate_predictions(y, y_proba, thresholds)` — אותם מדדים, על תחזיות שכבר חושבו — משמש לבדיקת ה-Test הסופית החד-פעמית.
+- `print_evaluation(results, label)` — הדפסה אחידה של התוצאות.
+
+כך מובטח שכל המודלים בפרויקט (Logistic Regression, XGBoost) נמדדים באותה שיטה ובאותם מדדים.
 
 ---
 
@@ -171,7 +200,8 @@ DaysSinceOrderBucket = "recent" / "medium" / "long" / "unknown"
 
 | קובץ | תיאור |
 |---|---|
-| `xgboost_experiment_1.py` | ניסוי 1 — Baseline + scale_pos_weight |
-| `xgboost_experiment_1_summary.csv` | תוצאות ניסוי 1 |
-| `xgboost_experiment_2.py` | ניסוי 2 — Feature Engineering + Threshold Tuning |
-| `xgboost_experiment_2_summary.csv` | תוצאות ניסוי 2 |
+| `xgboost_experiment_1_holdout.py` | ניסוי 1 — Baseline + scale_pos_weight + Train/Test split |
+| `xgboost_experiment_1_holdout_summary.csv` | תוצאות ניסוי 1 |
+| `xgboost_experiment_2_holdout.py` | ניסוי 2 — Feature Engineering + Threshold Tuning + Train/Test split |
+| `xgboost_experiment_2_holdout_summary.csv` | תוצאות ניסוי 2 (default + tuned) |
+| `../evaluation_utils.py` | פונקציות הערכה משותפות לכל המודלים בפרויקט |

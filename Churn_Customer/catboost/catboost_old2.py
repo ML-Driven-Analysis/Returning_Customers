@@ -3,58 +3,58 @@ Churn Customer — CatBoost Experiment 2
 
 Changes vs Experiment 1:
   - auto_class_weights="Balanced"  → penalises churn=1 misses more
-  - Threshold tuning: evaluate at [0.3, 0.4, 0.5]
-
-Split     : Hold-out 70% train / 30% test, shuffle=False
-            (last 30% of rows become test — original order preserved)
-Exposure  : Test set seen exactly once, at final evaluation only.
+  - Threshold tuning: evaluate at [0.3, 0.4, 0.5] to boost Recall (Ch=1)
 
 Data source  : E Commerce Dataset.xlsx  (Sheet: E Comm)
 Target       : Churn  (1 = churned, 0 = retained)
+Validation   : StratifiedKFold (5 splits, shuffle=True, random_state=42)
 """
 
 import pandas as pd
 import numpy as np
 from pathlib import Path
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import FunctionTransformer
+from catboost import CatBoostClassifier
+
+from sklearn.model_selection import cross_val_predict as _cvp
 from sklearn.metrics import (
     accuracy_score, balanced_accuracy_score,
     precision_score, recall_score, f1_score,
     roc_auc_score, average_precision_score, confusion_matrix,
 )
-from catboost import CatBoostClassifier
 
 
-
+# ---------------------------------------------------------------------------
 # evaluation_utils  (inline)
+# ---------------------------------------------------------------------------
 
-
-def evaluate_holdout(model, X_test, y_test, thresholds=None, pos_label=1):
+def evaluate_model_cv(model, X, y, cv, thresholds=None, pos_label=1):
     if thresholds is None:
         thresholds = [0.5]
-    y_proba = model.predict_proba(X_test)[:, 1]
-    roc_auc = roc_auc_score(y_test, y_proba)
-    pr_auc  = average_precision_score(y_test, y_proba, pos_label=pos_label)
+    y_proba = _cvp(model, X, y, cv=cv, method="predict_proba", n_jobs=1)[:, 1]
+    y_oof   = _cvp(model, X, y, cv=cv, method="predict",       n_jobs=1)
+    roc_auc = roc_auc_score(y, y_proba)
+    pr_auc  = average_precision_score(y, y_proba, pos_label=pos_label)
     threshold_results = {}
     for t in thresholds:
         y_pred = (y_proba >= t).astype(int)
         threshold_results[t] = {
-            "accuracy":          accuracy_score(y_test, y_pred),
-            "balanced_accuracy": balanced_accuracy_score(y_test, y_pred),
-            "precision_1":       precision_score(y_test, y_pred, pos_label=pos_label, zero_division=0),
-            "recall_1":          recall_score(y_test, y_pred, pos_label=pos_label, zero_division=0),
-            "f1_1":              f1_score(y_test, y_pred, pos_label=pos_label, zero_division=0),
-            "f1_macro":          f1_score(y_test, y_pred, average="macro", zero_division=0),
+            "accuracy":          accuracy_score(y, y_pred),
+            "balanced_accuracy": balanced_accuracy_score(y, y_pred),
+            "precision_1":       precision_score(y, y_pred, pos_label=pos_label, zero_division=0),
+            "recall_1":          recall_score(y, y_pred, pos_label=pos_label, zero_division=0),
+            "f1_1":              f1_score(y, y_pred, pos_label=pos_label, zero_division=0),
+            "f1_macro":          f1_score(y, y_pred, average="macro", zero_division=0),
             "roc_auc":           roc_auc,
             "pr_auc":            pr_auc,
-            "confusion_matrix":  confusion_matrix(y_test, y_pred),
+            "confusion_matrix":  confusion_matrix(y, y_pred),
         }
-    return {"thresholds": threshold_results, "y_proba": y_proba}
+    return {"thresholds": threshold_results, "y_proba": y_proba, "y_oof": y_oof}
 
 
 def print_evaluation(results, label=""):
@@ -80,9 +80,9 @@ def print_evaluation(results, label=""):
         print(f"  Actual 1  :  {cm[1][0]:>6}   {cm[1][1]:>6}")
 
 
-
-# sklearn-cloneable CatBoost wrapper
-
+# ---------------------------------------------------------------------------
+# sklearn-cloneable CatBoost wrapper  (same as Experiment 1)
+# ---------------------------------------------------------------------------
 
 class CloneableCatBoost(CatBoostClassifier):
     def __init__(self, cat_features_list=None, **kwargs):
@@ -96,8 +96,9 @@ class CloneableCatBoost(CatBoostClassifier):
         return params
 
 
-#  Paths
-
+# ===========================================================================
+# 1. Paths
+# ===========================================================================
 
 BASE_DIR  = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR.parent / "dataset" / "E Commerce Dataset.xlsx"
@@ -109,7 +110,6 @@ if not DATA_FILE.exists() and _UPLOAD_PATH.exists():
 print("=" * 70)
 print("Churn Customer — CatBoost Experiment 2")
 print("Changes: auto_class_weights='Balanced' + threshold tuning [0.3, 0.4, 0.5]")
-print("Split: Hold-out 70/30, shuffle=False")
 print("=" * 70)
 print(f"\nDataset: {DATA_FILE}")
 
@@ -117,9 +117,9 @@ if not DATA_FILE.exists():
     raise FileNotFoundError(f"Dataset not found: {DATA_FILE}")
 
 
-
-#  Load & validate
-
+# ===========================================================================
+# 2. Load & validate
+# ===========================================================================
 
 df = pd.read_excel(DATA_FILE, sheet_name="E Comm")
 df.columns = df.columns.str.strip()
@@ -133,15 +133,15 @@ df[LABEL] = df[LABEL].astype(int)
 
 n0 = (df[LABEL] == 0).sum()
 n1 = (df[LABEL] == 1).sum()
-print(f"\nLabel distribution (full dataset):")
+print(f"\nLabel distribution:")
 print(f"  Churn = 0 (retained): {n0:,} ({n0/len(df)*100:.1f}%)")
 print(f"  Churn = 1 (churned):  {n1:,} ({n1/len(df)*100:.1f}%)")
 print(f"  Imbalance ratio: {n0/n1:.2f}:1")
 
 
-
-#  Split — 70/30, shuffle=False
-
+# ===========================================================================
+# 3. Features
+# ===========================================================================
 
 NUMERIC_FEATURES = [
     "Tenure", "WarehouseToHome", "HourSpendOnApp", "NumberOfDeviceRegistered",
@@ -159,24 +159,10 @@ CATEGORICAL_FEATURES = [c for c in CATEGORICAL_FEATURES if c in df.columns]
 X = df.drop(columns=["CustomerID", LABEL])
 y = df[LABEL]
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y,
-    test_size=0.30,
-    shuffle=False,
-)
 
-print(f"\nSplit (shuffle=False):")
-print(f"  Train: {len(X_train):,} rows ({len(X_train)/len(X)*100:.1f}%)")
-print(f"  Test : {len(X_test):,}  rows ({len(X_test)/len(X)*100:.1f}%)")
-print(f"\n  Train — Churn=1: {y_train.sum():,} ({y_train.mean()*100:.1f}%)")
-print(f"  Test  — Churn=1: {y_test.sum():,}  ({y_test.mean()*100:.1f}%)")
-print(f"\nNumeric features     ({len(NUMERIC_FEATURES)}): {NUMERIC_FEATURES}")
-print(f"Categorical features ({len(CATEGORICAL_FEATURES)}): {CATEGORICAL_FEATURES}")
-print(f"\nThreshold sweep: [0.30, 0.40, 0.50]")
-
-
-
-#  Pipeline
+# ===========================================================================
+# 4. Pipeline
+# ===========================================================================
 
 numeric_transformer = Pipeline(steps=[
     ("imputer", SimpleImputer(strategy="median")),
@@ -200,6 +186,7 @@ preprocessor = ColumnTransformer(
 cat_indices = list(range(len(NUMERIC_FEATURES),
                          len(NUMERIC_FEATURES) + len(CATEGORICAL_FEATURES)))
 
+# ── KEY CHANGE: auto_class_weights="Balanced" ──────────────────────────────
 catboost_clf = CloneableCatBoost(
     cat_features_list=cat_indices,
     iterations=500,
@@ -217,69 +204,68 @@ model = Pipeline(steps=[
 ])
 
 print(f"\nCatBoost config:")
-print(f"  iterations         = 500")
-print(f"  learning_rate      = 0.05")
-print(f"  depth              = 6")
-print(f"  auto_class_weights = Balanced  ← NEW")
+print(f"  iterations        = 500")
+print(f"  learning_rate     = 0.05")
+print(f"  depth             = 6")
+print(f"  auto_class_weights= Balanced   ← NEW")
+print(f"  cat_features      = {CATEGORICAL_FEATURES}")
+print(f"\nThreshold sweep    = [0.30, 0.40, 0.50]   ← NEW")
 
 
+# ===========================================================================
+# 5. Cross-validation
+# ===========================================================================
 
-#  Train
-
-
-print("\n" + "=" * 70)
-print("Training on 70% train set...")
-print("=" * 70)
-
-model.fit(X_train, y_train)
-
-print("Training complete.")
-
-
-#  Evaluate — test set (חשיפה יחידה)
-
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
 print("\n" + "=" * 70)
-print("Evaluating on 30% test set (single exposure)...")
+print("Running 5-Fold Stratified Cross Validation...")
 print("=" * 70)
 
 THRESHOLDS = [0.30, 0.40, 0.50]
 
-results = evaluate_holdout(model, X_test, y_test, thresholds=THRESHOLDS)
-print_evaluation(results, label="CatBoost Experiment 2 — Test Set")
+results = evaluate_model_cv(
+    model, X, y, cv=cv,
+    thresholds=THRESHOLDS,
+    pos_label=1,
+)
+
+print_evaluation(results, label="CatBoost Experiment 2 (class_weight + threshold tuning)")
 
 
-
-#  Comparison vs Experiment 1
-
+# ===========================================================================
+# 6. Comparison vs Experiment 1  (threshold=0.5 baseline)
+# ===========================================================================
 
 EXP1 = {
-    "recall_1":    0.8253,
-    "precision_1": 0.9136,
-    "f1_1":        0.8672,
-    "f1_macro":    0.9217,
-    "roc_auc":     0.9846,
+    "recall_1":   0.7753,
+    "precision_1": 0.9269,
+    "f1_1":       0.8443,
+    "f1_macro":   0.9079,
+    "roc_auc":    0.9835,
 }
 
 print("\n" + "=" * 70)
-print("השוואה מול Experiment 1  (threshold=0.50)")
+print("Comparison vs Experiment 1  (threshold=0.50)")
 print("=" * 70)
-print(f"  {'מדד':<22} {'Exp 1':>8} {'Exp 2 t=0.50':>14} {'Exp 2 t=0.40':>14} {'Exp 2 t=0.30':>14}")
-print(f"  {'-' * 74}")
+print(f"  {'Metric':<22} {'Exp 1':>8} {'Exp 2 (t=0.50)':>15} {'Exp 2 (t=0.40)':>15} {'Exp 2 (t=0.30)':>15}")
+print(f"  {'-'*75}")
 
-for m in ["recall_1", "precision_1", "f1_1", "f1_macro", "roc_auc"]:
+metrics_to_compare = ["recall_1", "precision_1", "f1_1", "f1_macro", "roc_auc"]
+for m in metrics_to_compare:
     exp1_val = EXP1[m]
     row = f"  {m:<22} {exp1_val:>8.4f}"
     for t in [0.50, 0.40, 0.30]:
-        val   = results["thresholds"][t][m]
+        val = results["thresholds"][t][m]
         delta = val - exp1_val
         sign  = "+" if delta >= 0 else ""
-        row  += f"   {val:.4f}({sign}{delta:.4f})"
+        row += f"   {val:.4f}({sign}{delta:.4f})"
     print(row)
 
 
-
-#  Save summary
+# ===========================================================================
+# 7. Save summary
+# ===========================================================================
 
 rows = []
 for t in THRESHOLDS:

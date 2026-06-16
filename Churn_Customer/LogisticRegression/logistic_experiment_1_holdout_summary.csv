@@ -1,0 +1,2 @@
+,train_accuracy,train_balanced_accuracy,train_precision_1,train_recall_1,train_f1_1,train_f1_macro,train_roc_auc,test_accuracy,test_balanced_accuracy,test_precision_1,test_recall_1,test_f1_1,test_f1_macro,test_roc_auc
+logistic_experiment_1_holdout,0.893936,0.750088,0.766234,0.533133,0.628774,0.783452,0.890996,0.891652,0.738219,0.770053,0.507042,0.611465,0.774257,0.883647

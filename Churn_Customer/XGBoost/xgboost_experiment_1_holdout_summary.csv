@@ -1,0 +1,2 @@
+,scale_pos_weight,train_accuracy,train_balanced_accuracy,train_precision_1,train_recall_1,train_f1_1,train_f1_macro,train_roc_auc,train_pr_auc,test_accuracy,test_balanced_accuracy,test_precision_1,test_recall_1,test_f1_1,test_f1_macro,test_roc_auc,test_pr_auc
+xgboost_experiment_1_holdout,4.94,0.892667,0.870012,0.638665,0.835843,0.72407,0.828723,0.944196,0.816674,0.898165,0.89384,0.642857,0.887324,0.745562,0.840953,0.948105,0.816101
