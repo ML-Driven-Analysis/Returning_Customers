@@ -1,18 +1,14 @@
-# Churn Customer — ניסויי CatBoost
-
-
 ---
- 
+
 ##  מטרה
- 
+
 חיזוי האם לקוח ינטוש (Churn=1) או יישאר (Churn=0) בפלטפורמת מסחר אלקטרוני,
 על בסיס נתוני התנהגות, העדפות ושביעות רצון.
- 
+
 ---
 
-
 ##  נתונים
- 
+
 | פרמטר | ערך |
 |-------|-----|
 | קובץ | `E Commerce Dataset.xlsx` (Sheet: E Comm) |
@@ -21,50 +17,46 @@
 | משתנה מטרה | `Churn` (1 = נטש, 0 = נשאר) |
 | התפלגות | 4,682 נשארו (83.2%) / 948 נטשו (16.8%) |
 | חוסר איזון | יחס 4.94:1 לטובת המחלקה השלילית |
- 
+
 ---
 
-
 ##  אסטרטגיית חלוקת הדאטה
- 
+
 **Hold-out 70/30, stratify=y, random_state=42**
- 
+
 הדאטה מחולק פעם אחת תוך שמירה על יחס הנוטשים בכל חלק:
- 
+
 | חלק | שורות | אחוז | Churn=1 |
 |-----|-------|------|---------|
 | Train | 3,941 | 70% | 16.8% |
 | Test  | 1,689 | 30% | 16.8% |
- 
+
 - `stratify=y` — יחס הנוטשים זהה ב-Train וב-Test
 - `random_state=42` — החלוקה קבועה וניתנת לשחזור
 - ה-Test set נחשף למודל **פעם אחת בלבד** — בהערכה הסופית
+
 ---
 
 ##  ניסוי 1 — CatBoost Baseline
- 
+
 ### גישה
- 
+
 - מודל CatBoost עם פרמטרים ברירת מחדל
 - אימפוטציה: חציון לנומריים, ערך שכיח לקטגוריים
 - ללא תיקון חוסר איזון
 - סף קלסיפיקציה: 0.50
 
-
 ### פיצ'רים
- 
-**Numeric (13):**
+
+**numeric (13):**
 Tenure, WarehouseToHome, HourSpendOnApp, NumberOfDeviceRegistered, SatisfactionScore,
 NumberOfAddress, Complain, OrderAmountHikeFromlastYear, CouponUsed, OrderCount,
 DaySinceLastOrder, CashbackAmount, CityTier
 
-
 **categorical (5):**
 PreferredLoginDevice, PreferredPaymentMode, Gender, PreferedOrderCat, MaritalStatus
 
-
-### תוצאות — 
- 
+### תוצאות — Test Set
 
 | מדד | ערך | הערה |
 |-----|-----|------|
@@ -76,21 +68,19 @@ PreferredLoginDevice, PreferredPaymentMode, Gender, PreferedOrderCat, MaritalSta
 | F1 Macro | 0.8925 | איזון בינוני בין המחלקות |
 | ROC AUC | 0.9796 | הפרדה מצוינת בין נוטשים לנשארים |
 | PR AUC | 0.9270 | ביצוע טוב גם על המחלקה המיעוט |
- 
-
 
 ### מטריצת בלבול
- 
+
 ```
                   Predicted 0    Predicted 1
   Actual 0  :       1,380            25
   Actual 1  :          70           214
 ```
- 
+
 ---
 
 ##  מסקנות ניסוי 1
- 
+
 **הצלחה:**
 - ROC AUC של 0.9796 — המודל מפריד היטב בין המחלקות
 - Precision גבוה (0.8954) — כשהמודל מנבא נטישה הוא צודק ב-89.5% מהמקרים
@@ -100,6 +90,7 @@ PreferredLoginDevice, PreferredPaymentMode, Gender, PreferedOrderCat, MaritalSta
 - Recall של 0.7535 — המודל **מפספס 70 לקוחות נוטשים** מתוך 284 ב-Test
 - חוסר האיזון בדאטה (4.94:1) גורם למודל להטות לצד המחלקה הרוב
 - מבחינה עסקית: לקוח נוטש שמתפספס עולה יותר מלקוח שמסווג בטעות כנוטש
+
 ---
 
 ##  ניסוי 2 — CatBoost עם Class Weights + Threshold Tuning
@@ -107,10 +98,9 @@ PreferredLoginDevice, PreferredPaymentMode, Gender, PreferedOrderCat, MaritalSta
 ### גישה
 
 שני שינויים מרכזיים ביחס לניסוי 1:
- 
+
 1. **`auto_class_weights="Balanced"`** — CatBoost מחשב אוטומטית משקל גבוה יותר למחלקת הנוטשים (1) בזמן האימון, כדי לפצות על חוסר האיזון
 2. **Threshold Tuning** — בדיקת שלושה ספי קלסיפיקציה: 0.30, 0.40, 0.50, כדי לשלוט ב-tradeoff בין Recall ל-Precision
-
 
 ### פיצ'רים
 
@@ -119,7 +109,7 @@ PreferredLoginDevice, PreferredPaymentMode, Gender, PreferedOrderCat, MaritalSta
 ---
 
 ### תוצאות — Threshold = 0.50
- 
+
 | מדד | ערך | הערה |
 |-----|-----|------|
 | Accuracy | 0.9479 | שיפור קל על ניסוי 1 |
@@ -130,11 +120,11 @@ PreferredLoginDevice, PreferredPaymentMode, Gender, PreferedOrderCat, MaritalSta
 | F1 Macro | 0.9122 | איזון טוב בין המחלקות |
 | ROC AUC | 0.9815 | שיפור על ניסוי 1 |
 | PR AUC | 0.9269 | דומה לניסוי 1 |
- 
+
 ---
 
 ### תוצאות — Threshold = 0.40
- 
+
 | מדד | ערך | הערה |
 |-----|-----|------|
 | Accuracy | 0.9331 | ירידה קלה — יותר FP מסף נמוך יותר |
@@ -145,11 +135,11 @@ PreferredLoginDevice, PreferredPaymentMode, Gender, PreferedOrderCat, MaritalSta
 | F1 Macro | 0.8922 | ביצוע יציב על שתי המחלקות |
 | ROC AUC | 0.9815 | זהה ל-t=0.50 — הסף לא משפיע על AUC |
 | PR AUC | 0.9269 | זהה ל-t=0.50 |
- 
+
 ---
 
 ### תוצאות — Threshold = 0.30
- 
+
 | מדד | ערך | הערה |
 |-----|-----|------|
 | Accuracy | 0.9159 | הנמוך ביותר — 135 FP |
@@ -160,17 +150,17 @@ PreferredLoginDevice, PreferredPaymentMode, Gender, PreferedOrderCat, MaritalSta
 | F1 Macro | 0.8715 | הנמוך ביותר מבין ניסויי CatBoost |
 | ROC AUC | 0.9815 | זהה — הסף לא משפיע על AUC |
 | PR AUC | 0.9269 | זהה |
- 
+
 ---
 
 ### מטריצות בלבול
 
- 
 **Threshold = 0.50**
 ```
                   Predicted 0    Predicted 1
   Actual 0  :       1,339            66
   Actual 1  :          22           262
+```
 
 **Threshold = 0.40**
 ```
@@ -178,15 +168,15 @@ PreferredLoginDevice, PreferredPaymentMode, Gender, PreferedOrderCat, MaritalSta
   Actual 0  :       1,308            97
   Actual 1  :          16           268
 ```
- 
+
 **Threshold = 0.30**
 ```
                   Predicted 0    Predicted 1
   Actual 0  :       1,270           135
   Actual 1  :           7           277
 ```
----
 
+---
 
 ##  השוואה סופית
 
