@@ -31,9 +31,9 @@ from sklearn.metrics import (
 from catboost import CatBoostClassifier
 
 
-
+# ---------------------------------------------------------------------------
 # evaluation_utils  (inline)
-
+# ---------------------------------------------------------------------------
 
 def evaluate_holdout(model, X_test, y_test, thresholds=None, pos_label=1):
     if thresholds is None:
@@ -81,7 +81,9 @@ def print_evaluation(results, label=""):
         print(f"  Actual 1  :  {cm[1][0]:>6}   {cm[1][1]:>6}")
 
 
+# ---------------------------------------------------------------------------
 # sklearn-cloneable CatBoost wrapper
+# ---------------------------------------------------------------------------
 
 class CloneableCatBoost(CatBoostClassifier):
     def __init__(self, cat_features_list=None, **kwargs):
@@ -95,7 +97,9 @@ class CloneableCatBoost(CatBoostClassifier):
         return params
 
 
+# ===========================================================================
 # 1. Paths
+# ===========================================================================
 
 BASE_DIR  = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR.parent / "dataset" / "E Commerce Dataset.xlsx"
@@ -114,7 +118,9 @@ if not DATA_FILE.exists():
     raise FileNotFoundError(f"Dataset not found: {DATA_FILE}")
 
 
-#  Load & validate
+# ===========================================================================
+# 2. Load & validate
+# ===========================================================================
 
 df = pd.read_excel(DATA_FILE, sheet_name="E Comm")
 df.columns = df.columns.str.strip()
@@ -137,9 +143,9 @@ print(f"  Churn = 1 (churned):  {n1:,} ({n1/len(df)*100:.1f}%)")
 print(f"  Imbalance ratio: {n0/n1:.2f}:1")
 
 
-
-# Split — 70/30, shuffle=False
-
+# ===========================================================================
+# 3. Split — 70/30, shuffle=False
+# ===========================================================================
 
 NUMERIC_FEATURES = [
     "Tenure", "WarehouseToHome", "HourSpendOnApp", "NumberOfDeviceRegistered",
@@ -160,10 +166,11 @@ y = df[LABEL]
 X_train, X_test, y_train, y_test = train_test_split(
     X, y,
     test_size=0.30,
-    shuffle=False,      # שומר על סדר המקורי
+    stratify=y,
+    random_state=42,
 )
 
-print(f"\nSplit (shuffle=False):")
+print(f"\nSplit (stratify=y, random_state=42):")
 print(f"  Train: {len(X_train):,} rows ({len(X_train)/len(X)*100:.1f}%)")
 print(f"  Test : {len(X_test):,}  rows ({len(X_test)/len(X)*100:.1f}%)")
 print(f"\n  Train — Churn=1: {y_train.sum():,} ({y_train.mean()*100:.1f}%)")
@@ -172,8 +179,9 @@ print(f"\nNumeric features     ({len(NUMERIC_FEATURES)}): {NUMERIC_FEATURES}")
 print(f"Categorical features ({len(CATEGORICAL_FEATURES)}): {CATEGORICAL_FEATURES}")
 
 
-
-#  Pipeline
+# ===========================================================================
+# 4. Pipeline
+# ===========================================================================
 
 numeric_transformer = Pipeline(steps=[
     ("imputer", SimpleImputer(strategy="median")),
@@ -218,8 +226,9 @@ print(f"  learning_rate = 0.05")
 print(f"  depth         = 6")
 
 
-
-#  Train
+# ===========================================================================
+# 5. Train
+# ===========================================================================
 
 print("\n" + "=" * 70)
 print("Training on 70% train set...")
@@ -230,8 +239,9 @@ model.fit(X_train, y_train)
 print("Training complete.")
 
 
-
-#  Evaluate — test set (חשיפה יחידה)
+# ===========================================================================
+# 6. Evaluate — test set (חשיפה יחידה)
+# ===========================================================================
 
 print("\n" + "=" * 70)
 print("Evaluating on 30% test set (single exposure)...")
@@ -241,8 +251,10 @@ results = evaluate_holdout(model, X_test, y_test, thresholds=[0.5])
 print_evaluation(results, label="CatBoost Experiment 1 (Baseline) — Test Set")
 
 
+# ===========================================================================
+# 7. Save summary
+# ===========================================================================
 
-#  Save summary
 metrics_05 = results["thresholds"][0.5]
 
 summary = {
