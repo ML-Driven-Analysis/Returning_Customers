@@ -29,9 +29,7 @@ from sklearn.metrics import (
 )
 
 
-# ---------------------------------------------------------------------------
 # evaluation_utils  (inline)
-# ---------------------------------------------------------------------------
 
 def evaluate_model_cv(model, X, y, cv, thresholds=None, pos_label=1):
     if thresholds is None:
@@ -80,9 +78,8 @@ def print_evaluation(results, label=""):
         print(f"  Actual 1  :  {cm[1][0]:>6}   {cm[1][1]:>6}")
 
 
-# ---------------------------------------------------------------------------
+
 # sklearn-cloneable CatBoost wrapper  (same as Experiment 1)
-# ---------------------------------------------------------------------------
 
 class CloneableCatBoost(CatBoostClassifier):
     def __init__(self, cat_features_list=None, **kwargs):
@@ -96,10 +93,7 @@ class CloneableCatBoost(CatBoostClassifier):
         return params
 
 
-# ===========================================================================
-# 1. Paths
-# ===========================================================================
-
+#  Paths
 BASE_DIR  = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR.parent / "dataset" / "E Commerce Dataset.xlsx"
 
@@ -117,9 +111,8 @@ if not DATA_FILE.exists():
     raise FileNotFoundError(f"Dataset not found: {DATA_FILE}")
 
 
-# ===========================================================================
-# 2. Load & validate
-# ===========================================================================
+
+# Load & validate
 
 df = pd.read_excel(DATA_FILE, sheet_name="E Comm")
 df.columns = df.columns.str.strip()
@@ -139,9 +132,8 @@ print(f"  Churn = 1 (churned):  {n1:,} ({n1/len(df)*100:.1f}%)")
 print(f"  Imbalance ratio: {n0/n1:.2f}:1")
 
 
-# ===========================================================================
-# 3. Features
-# ===========================================================================
+
+# Features
 
 NUMERIC_FEATURES = [
     "Tenure", "WarehouseToHome", "HourSpendOnApp", "NumberOfDeviceRegistered",
@@ -160,9 +152,8 @@ X = df.drop(columns=["CustomerID", LABEL])
 y = df[LABEL]
 
 
-# ===========================================================================
-# 4. Pipeline
-# ===========================================================================
+
+#  Pipeline
 
 numeric_transformer = Pipeline(steps=[
     ("imputer", SimpleImputer(strategy="median")),
@@ -186,7 +177,7 @@ preprocessor = ColumnTransformer(
 cat_indices = list(range(len(NUMERIC_FEATURES),
                          len(NUMERIC_FEATURES) + len(CATEGORICAL_FEATURES)))
 
-# ── KEY CHANGE: auto_class_weights="Balanced" ──────────────────────────────
+#  KEY CHANGE: auto_class_weights="Balanced"
 catboost_clf = CloneableCatBoost(
     cat_features_list=cat_indices,
     iterations=500,
@@ -212,9 +203,8 @@ print(f"  cat_features      = {CATEGORICAL_FEATURES}")
 print(f"\nThreshold sweep    = [0.30, 0.40, 0.50]   ← NEW")
 
 
-# ===========================================================================
-# 5. Cross-validation
-# ===========================================================================
+
+#  Cross-validation
 
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
@@ -233,9 +223,8 @@ results = evaluate_model_cv(
 print_evaluation(results, label="CatBoost Experiment 2 (class_weight + threshold tuning)")
 
 
-# ===========================================================================
-# 6. Comparison vs Experiment 1  (threshold=0.5 baseline)
-# ===========================================================================
+
+#  Comparison vs Experiment 1  (threshold=0.5 baseline)
 
 EXP1 = {
     "recall_1":   0.7753,
@@ -263,9 +252,7 @@ for m in metrics_to_compare:
     print(row)
 
 
-# ===========================================================================
-# 7. Save summary
-# ===========================================================================
+# Save summary
 
 rows = []
 for t in THRESHOLDS:

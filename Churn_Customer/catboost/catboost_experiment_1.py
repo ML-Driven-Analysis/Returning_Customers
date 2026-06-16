@@ -31,9 +31,8 @@ from sklearn.metrics import (
 from catboost import CatBoostClassifier
 
 
-# ---------------------------------------------------------------------------
+
 # evaluation_utils  (inline)
-# ---------------------------------------------------------------------------
 
 def evaluate_holdout(model, X_test, y_test, thresholds=None, pos_label=1):
     if thresholds is None:
@@ -81,9 +80,8 @@ def print_evaluation(results, label=""):
         print(f"  Actual 1  :  {cm[1][0]:>6}   {cm[1][1]:>6}")
 
 
-# ---------------------------------------------------------------------------
+
 # sklearn-cloneable CatBoost wrapper
-# ---------------------------------------------------------------------------
 
 class CloneableCatBoost(CatBoostClassifier):
     def __init__(self, cat_features_list=None, **kwargs):
@@ -97,9 +95,8 @@ class CloneableCatBoost(CatBoostClassifier):
         return params
 
 
-# ===========================================================================
-# 1. Paths
-# ===========================================================================
+
+#  Paths
 
 BASE_DIR  = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR.parent / "dataset" / "E Commerce Dataset.xlsx"
@@ -118,9 +115,8 @@ if not DATA_FILE.exists():
     raise FileNotFoundError(f"Dataset not found: {DATA_FILE}")
 
 
-# ===========================================================================
-# 2. Load & validate
-# ===========================================================================
+
+# Load & validate
 
 df = pd.read_excel(DATA_FILE, sheet_name="E Comm")
 df.columns = df.columns.str.strip()
@@ -143,9 +139,8 @@ print(f"  Churn = 1 (churned):  {n1:,} ({n1/len(df)*100:.1f}%)")
 print(f"  Imbalance ratio: {n0/n1:.2f}:1")
 
 
-# ===========================================================================
-# 3. Split — 70/30, shuffle=False
-# ===========================================================================
+
+# Split — 70/30, shuffle=False
 
 NUMERIC_FEATURES = [
     "Tenure", "WarehouseToHome", "HourSpendOnApp", "NumberOfDeviceRegistered",
@@ -179,9 +174,8 @@ print(f"\nNumeric features     ({len(NUMERIC_FEATURES)}): {NUMERIC_FEATURES}")
 print(f"Categorical features ({len(CATEGORICAL_FEATURES)}): {CATEGORICAL_FEATURES}")
 
 
-# ===========================================================================
-# 4. Pipeline
-# ===========================================================================
+
+# Pipeline
 
 numeric_transformer = Pipeline(steps=[
     ("imputer", SimpleImputer(strategy="median")),
@@ -226,9 +220,8 @@ print(f"  learning_rate = 0.05")
 print(f"  depth         = 6")
 
 
-# ===========================================================================
-# 5. Train
-# ===========================================================================
+
+# Train
 
 print("\n" + "=" * 70)
 print("Training on 70% train set...")
@@ -239,9 +232,7 @@ model.fit(X_train, y_train)
 print("Training complete.")
 
 
-# ===========================================================================
-# 6. Evaluate — test set (חשיפה יחידה)
-# ===========================================================================
+# Evaluate — test set (חשיפה יחידה)
 
 print("\n" + "=" * 70)
 print("Evaluating on 30% test set (single exposure)...")
@@ -251,9 +242,7 @@ results = evaluate_holdout(model, X_test, y_test, thresholds=[0.5])
 print_evaluation(results, label="CatBoost Experiment 1 (Baseline) — Test Set")
 
 
-# ===========================================================================
-# 7. Save summary
-# ===========================================================================
+# Save summary
 
 metrics_05 = results["thresholds"][0.5]
 

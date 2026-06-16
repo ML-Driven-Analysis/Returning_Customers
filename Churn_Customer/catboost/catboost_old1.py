@@ -23,9 +23,8 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import FunctionTransformer
 from catboost import CatBoostClassifier
 
-# ---------------------------------------------------------------------------
+
 # evaluation_utils  (inline — same interface as the shared module)
-# ---------------------------------------------------------------------------
 from sklearn.model_selection import cross_val_predict as _cvp
 from sklearn.metrics import (
     accuracy_score, balanced_accuracy_score,
@@ -79,14 +78,13 @@ def print_evaluation(results, label=""):
             print(f"    {row}")
 
 
-# ---------------------------------------------------------------------------
+
 # sklearn-cloneable CatBoost wrapper
-# ---------------------------------------------------------------------------
+
 # sklearn's cross_val_predict calls clone() on the estimator each fold.
 # CatBoostClassifier modifies cat_features inside __init__, which breaks
 # clone(). This thin wrapper stores cat_features_list as a plain constructor
 # argument so clone() can reconstruct it correctly.
-# ---------------------------------------------------------------------------
 
 class CloneableCatBoost(CatBoostClassifier):
     """CatBoostClassifier that survives sklearn.base.clone()."""
@@ -123,9 +121,8 @@ if not DATA_FILE.exists():
     raise FileNotFoundError(f"Dataset not found: {DATA_FILE}")
 
 
-# ===========================================================================
-# 2. Load & validate data   (identical to Experiment 1)
-# ===========================================================================
+
+#  Load & validate data   (identical to Experiment 1)
 
 df = pd.read_excel(DATA_FILE, sheet_name="E Comm")
 df.columns = df.columns.str.strip()
@@ -148,9 +145,7 @@ print(f"  Churn = 1 (churned):  {n1:,} ({n1/len(df)*100:.1f}%)")
 print(f"  Imbalance ratio: {n0/n1:.2f}:1")
 
 
-# ===========================================================================
-# 3. Feature definitions   (same split as Experiment 1)
-# ===========================================================================
+# Feature definitions   (same split as Experiment 1)
 
 NUMERIC_FEATURES = [
     "Tenure", "WarehouseToHome", "HourSpendOnApp", "NumberOfDeviceRegistered",
@@ -173,9 +168,8 @@ X = df.drop(columns=["CustomerID", LABEL])
 y = df[LABEL]
 
 
-# ===========================================================================
-# 4. Preprocessing pipeline
-# ===========================================================================
+#  Preprocessing pipeline
+
 # CatBoost handles categoricals natively — no StandardScaler or OHE needed.
 # We only impute and cast cats to str so CatBoost never receives a float NaN
 # in a categorical column.
@@ -183,7 +177,7 @@ y = df[LABEL]
 # ColumnTransformer output layout:
 #   [ numeric_cols (13) | categorical_cols (5) ]
 # Cat feature indices in the transformed matrix = [13, 14, 15, 16, 17]
-# ===========================================================================
+
 
 numeric_transformer = Pipeline(steps=[
     ("imputer", SimpleImputer(strategy="median")),
@@ -230,10 +224,7 @@ print(f"  depth         = 6")
 print(f"  cat_features  = indices {cat_indices}  → {CATEGORICAL_FEATURES}")
 
 
-# ===========================================================================
-# 5. Cross-validation via evaluate_model_cv
-# ===========================================================================
-
+#  Cross-validation via evaluate_model_cv
 cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
 print("\n" + "=" * 70)
@@ -249,9 +240,7 @@ results = evaluate_model_cv(
 print_evaluation(results, label="CatBoost Experiment 1 (Baseline)")
 
 
-# ===========================================================================
-# 6. Save summary CSV   (same convention as Experiment 1)
-# ===========================================================================
+#  Save summary CSV   (same convention as Experiment 1)
 
 metrics_05 = results["thresholds"][0.5]
 
