@@ -1,2 +1,2 @@
 ,accuracy_mean,accuracy_std,balanced_accuracy_mean,balanced_accuracy_std,precision_0_mean,precision_0_std,recall_0_mean,recall_0_std,f1_0_mean,f1_0_std,precision_1_mean,precision_1_std,recall_1_mean,recall_1_std,f1_macro_mean,f1_macro_std,roc_auc_mean,roc_auc_std,oof_accuracy,oof_recall_0,oof_recall_1,oof_f1_macro,oof_roc_auc
-random_forest_experiment_1,0.944938,0.0,0.874194,0.0,0.954294,0.0,0.980783,0.0,0.967357,0.0,0.889796,0.0,0.767606,0.0,0.895777,0.0,0.979176,0.0,0.944938,0.980783,0.767606,0.895777,0.979176
+random_forest_experiment_1,0.934281,0.0,0.922572,0.0,0.97997,0.0,0.940214,0.0,0.95968,0.0,0.753666,0.0,0.90493,0.0,0.89104,0.0,0.979176,0.0,0.934281,0.940214,0.90493,0.89104,0.979176

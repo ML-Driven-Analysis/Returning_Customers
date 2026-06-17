@@ -489,11 +489,12 @@ model.fit(X_train, y_train)
 # Extract predicted probabilities for Class 1 (Churned) from the test set
 y_proba = model.predict_proba(X_test)[:, 1]
 
-print("\n" + "=" * 115)
+print("\n" + "=" * 135)
 print("DYNAMIC DECISION THRESHOLD SCAN — PERFORMANCE & CONFUSION MATRIX COMPARISON (CLASS 1 FOCUS)")
-print("=" * 115)
-print(f" {'Threshold':11s} | {'Accuracy':10s} | {'Precision (C1)':16s} | {'Recall (C1)':13s} | {'F1-Score (C1)':14s} | {'Confusion Matrix (TN, FP, FN, TP)':35s}")
-print("-" * 115)
+print("=" * 135)
+# כאן הוספנו את עמודת הכותרת הברורה: Balanced Acc
+print(f" {'Threshold':11s} | {'Accuracy':10s} | {'Balanced Acc':12s} | {'Precision (C1)':16s} | {'Recall (C1)':13s} | {'F1-Score (C1)':14s} | {'Confusion Matrix (TN, FP, FN, TP)':35s}")
+print("-" * 135)
 
 # Array of thresholds to scan from highly permissive (0.20) to conservative (0.60)
 thresholds_to_scan = [0.60, 0.55, 0.50, 0.45, 0.40, 0.35, 0.30, 0.25, 0.20]
@@ -504,7 +505,7 @@ for threshold in thresholds_to_scan:
     preds = (y_proba >= threshold).astype(int)
     
     acc = accuracy_score(y_test, preds)
-    b_acc = balanced_accuracy_score(y_test, preds)
+    b_acc = balanced_accuracy_score(y_test, preds) # חישוב הציון המאוזן
     p0 = precision_score(y_test, preds, pos_label=0, zero_division=0)
     r0 = recall_score(y_test, preds, pos_label=0, zero_division=0)
     f0 = f1_score(y_test, preds, pos_label=0, zero_division=0)
@@ -521,8 +522,8 @@ for threshold in thresholds_to_scan:
     tn, fp, fn, tp = cm.ravel()
     cm_str = f"TN: {tn:<4} FP: {fp:<3} FN: {fn:<3} TP: {tp:<4}"
     
-    # Print a clean row summarizing key outcomes and confusion matrix elements
-    print(f"  {threshold:<10.2f} | {acc:<10.4f} | {p1:<16.4f} | {r1:<13.4f} | {f1:<14.4f} | {cm_str}")
+    # כאן הזרקנו את המשתנה b_acc ישירות לתוך פקודת ההדפסה של השורה
+    print(f"  {threshold:<10.2f} | {acc:<10.4f} | {b_acc:<12.4f} | {p1:<16.4f} | {r1:<13.4f} | {f1:<14.4f} | {cm_str}")
     
     # Collect data for the global CSV summary storage structure
     scan_records.append({
@@ -532,11 +533,7 @@ for threshold in thresholds_to_scan:
         "f1_macro": f1_macro, "roc_auc": roc_auc
     })
 
-print("-" * 115)
-
-# For final CSV compilation, we save the configuration matching our standard row structure using threshold 0.35
-chosen_idx = thresholds_to_scan.index(0.35)
-c_rec = scan_records[chosen_idx]
+print("-" * 135)
 
 
 # =========================================================
